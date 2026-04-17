@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TEAM XIT | PREMIVM NVB</title>
+
+    <meta property="og:title" content="TEAM XIT">
+    <meta property="og:description" content="Official Secure Access Hub">
+    <meta property="og:image" content="logo.png">
+    <meta property="og:type" content="website">
+    <meta name="twitter:card" content="summary_large_image">
+    
+    <link rel="icon" type="image/png" href="logo.png">
+
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #00f2ff;
+            --accent: #7000ff;
+            --danger: #ff2d55;
+            --bg: #02040a;
+            --card: rgba(10, 15, 25, 0.7);
+            --border: rgba(0, 242, 255, 0.2);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; outline: none; }
+        body { background: var(--bg); color: #fff; font-family: 'Inter', sans-serif; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+
+        /* FONDO DINÁMICO */
+        #particle-canvas { 
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            z-index: -1; 
+            background: radial-gradient(circle at center, #0a1018 0%, #02040a 100%);
+        }
+
+        /* NOTIFICACIONES */
+        #toast-container {
+            position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+            z-index: 9999; width: 90%; max-width: 350px; pointer-events: none;
+        }
+        .toast {
+            background: rgba(10, 15, 25, 0.9); border: 1px solid var(--primary);
+            color: #fff; padding: 15px; border-radius: 12px; font-family: 'Orbitron';
+            font-size: 0.65rem; text-align: center; backdrop-filter: blur(10px);
+            box-shadow: 0 0 20px rgba(0, 242, 255, 0.2);
+            margin-bottom: 10px; animation: slideDown 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+        }
+        @keyframes slideDown { from { transform: translateY(-100px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+        /* MODAL */
+        #password-modal {
+            display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8);
+            backdrop-filter: blur(10px); z-index: 5000; justify-content: center; align-items: center;
+        }
+        .modal-box {
+            background: #0a0c10; border: 1px solid var(--border); padding: 30px;
+            border-radius: 25px; width: 90%; max-width: 320px; text-align: center;
+        }
+
+        .music-bar {
+            width: 100%; padding: 15px 30px; background: rgba(0,0,0,0.8); backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; z-index: 1000;
+        }
+        .track-info { font-family: 'Orbitron'; font-size: 0.6rem; color: var(--primary); letter-spacing: 2px; }
+
+        .scroll-wrapper { flex: 1; overflow-y: auto; display: flex; flex-direction: column; align-items: center; padding: 40px 0; width: 100%; }
+        .main-container { width: 90%; max-width: 480px; text-align: center; }
+        
+        .site-logo { width: 85px; height: auto; margin-bottom: 10px; filter: drop-shadow(0 0 15px var(--primary)); transition: 0.5s; }
+        .site-logo:hover { transform: scale(1.1) rotate(5deg); }
+        
+        .brand-logo { font-family: 'Orbitron'; font-weight: 900; font-size: 2.2rem; background: linear-gradient(180deg, #fff, var(--primary)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; cursor: pointer; text-shadow: 0 0 30px rgba(0,242,255,0.3); }
+
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 30px; }
+        .card-btn { 
+            background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 35px 15px; 
+            cursor: pointer; transition: 0.3s; backdrop-filter: blur(5px);
+        }
+        .card-btn:hover { border-color: var(--primary); background: rgba(0, 242, 255, 0.05); transform: translateY(-5px); }
+        .card-btn h3 { font-family: 'Orbitron'; font-size: 0.7rem; color: #fff; }
+
+        /* ADMIN PANEL */
+        #admin-panel { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.95); backdrop-filter: blur(30px); z-index: 2000; justify-content: center; align-items: center; }
+        .admin-box { background: #0a0c10; border: 1px solid #1a202c; width: 90%; max-width: 420px; max-height: 90vh; padding: 25px; border-radius: 30px; display: flex; flex-direction: column; }
+        .admin-scroll { overflow-y: auto; flex: 1; margin: 15px 0; padding-right: 5px; }
+
+        .manage-row { display: flex; align-items: center; justify-content: space-between; background: #0d1117; padding: 10px 15px; border-radius: 12px; margin-bottom: 8px; border: 1px solid #161b22; }
+        .trash-btn { background: rgba(255,45,85,0.1); border: 1px solid var(--danger); padding: 8px; border-radius: 8px; cursor: pointer; }
+        .trash-btn svg { fill: var(--danger); width: 14px; }
+
+        input, select { width: 100%; padding: 12px; margin: 5px 0; background: #0d1117; border: 1px solid #161b22; color: #fff; border-radius: 10px; font-size: 0.8rem; }
+        .btn-add { background: var(--accent); color: #fff; border: none; padding: 12px; border-radius: 10px; font-weight: 700; cursor: pointer; width: 100%; }
+        .btn-update { background: var(--primary); color: #000; border: none; padding: 12px; border-radius: 10px; font-weight: 900; cursor: pointer; width: 100%; }
+
+        .view { display: none; width: 100%; }
+        .active { display: block; animation: fadeIn 0.4s ease; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        .step-tile { background: rgba(255,255,255,0.03); padding: 20px; border-radius: 15px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border: 1px solid rgba(255,255,255,0.05); }
+        .btn-go { background: #fff; color: #000; text-decoration: none; padding: 8px 15px; border-radius: 10px; font-weight: 800; font-size: 0.65rem; }
+    </style>
+</head>
+<body>
+
+    <div id="toast-container"></div>
+
+    <div id="password-modal">
+        <div class="modal-box">
+            <h3 style="font-family:'Orbitron'; font-size:0.7rem; color:var(--danger); margin-bottom:15px;">SEGURIDAD REQUERIDA</h3>
+            <p id="pass-msg" style="font-size:0.6rem; color:#888; margin-bottom:20px;"></p>
+            <input type="password" id="pass-input" placeholder="INGRESAR CLAVE" style="text-align:center; border-color:var(--danger);">
+            <div style="display:flex; gap:10px; margin-top:15px;">
+                <button onclick="closePassModal()" style="flex:1; background:#111; color:#fff; border:none; padding:10px; border-radius:10px; cursor:pointer; font-size:0.6rem;">CANCELAR</button>
+                <button onclick="confirmPass()" style="flex:1; background:var(--danger); color:#fff; border:none; padding:10px; border-radius:10px; cursor:pointer; font-size:0.6rem; font-weight:900;">CONFIRMAR</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="music-bar">
+        <div class="m-controls">
+            <button onclick="changeTrack(-1)" style="background:none; border:none; color:#fff; cursor:pointer; font-size: 1.2rem;">«</button>
+            <button id="p-btn" onclick="togglePlay()" style="background:none; border:none; color:var(--primary); font-weight:900; cursor:pointer; margin:0 15px; font-family: 'Orbitron'; font-size: 0.7rem;">PLAY</button>
+            <button onclick="changeTrack(1)" style="background:none; border:none; color:#fff; cursor:pointer; font-size: 1.2rem;">»</button>
+        </div>
+        <div id="m-status" class="track-info">SYSTΞM_ACTIVΞ</div>
+    </div>
+
+    <canvas id="particle-canvas"></canvas>
+
+    <div id="admin-panel">
+        <div class="admin-box">
+            <h2 style="font-family:'Orbitron'; font-size:0.8rem; color:var(--primary); text-align:center;">ROOT_CONTROLLER</h2>
+            <div class="admin-scroll" id="admin-list"></div>
+            <div style="border-top: 1px solid #222; padding-top: 15px;">
+                <input type="text" id="new-name" placeholder="Nombre de nuevo miembro">
+                <button onclick="addNewMember()" class="btn-add">AÑADIR MIEMBRO</button>
+                <hr style="border:0; border-top:1px solid #222; margin:15px 0;">
+                <select id="adm-sel"></select>
+                <input type="text" id="adm-l1" placeholder="URL Paso 1">
+                <input type="text" id="adm-l2" placeholder="URL Paso 2">
+                <input type="text" id="adm-dl" placeholder="URL Descarga">
+                <button onclick="updateCloud()" class="btn-update">GUARDAR LINKS</button>
+            </div>
+            <p onclick="closeAdmin()" style="text-align: center; margin-top: 15px; color: var(--danger); font-size: 0.6rem; cursor: pointer; font-weight: 900;">SALIR DEL PANEL</p>
+        </div>
+    </div>
+
+    <div class="scroll-wrapper">
+        <div class="main-container">
+            <div class="brand-box" onclick="checkAdminAccess()">
+                <img src="logo.png" alt="Logo" class="site-logo">
+                <h1 class="brand-logo">TEAM XIT</h1>
+                <p style="font-size: 0.5rem; color: #444; letter-spacing: 5px; margin-top:5px;">EL MEJOR EQUIPO</p>
+            </div>
+
+            <div id="hub-view" class="view active">
+                <div class="grid" id="main-grid"></div>
+            </div>
+
+            <div id="step-view" class="view">
+                <h2 id="target-name" style="font-family:'Orbitron'; color:var(--primary); margin-bottom:30px; font-size: 1.1rem;"></h2>
+                <div class="step-tile"><span>PASO 01</span><a href="#" id="l1" target="_blank" class="btn-go" onclick="nextStep(2)">IR</a></div>
+                <div id="row-2" class="step-tile" style="opacity: 0.1; pointer-events: none;"><span>PASO 02</span><a href="#" id="l2" target="_blank" class="btn-go" onclick="nextStep(3)">IR</a></div>
+                <a href="#" id="dl-final" style="display:block; width:100%; padding:20px; background:#0a0a0a; color:#333; border-radius:15px; text-decoration:none; font-weight:900; border:1px solid #1a1a1a; pointer-events:none; transition: 0.5s;">BLOQUEADO</a>
+                <p onclick="location.reload()" style="margin-top: 25px; font-size: 0.6rem; color: #444; cursor: pointer;">← VOLVER</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const FB_URL = "https://team-web-c79d1-default-rtdb.firebaseio.com/xit_god.json";
+        let cloudData = [];
+        let itemToDelete = null;
+        let loginType = "";
+
+        function showToast(msg) {
+            const container = document.getElementById('toast-container');
+            const t = document.createElement('div');
+            t.className = 'toast';
+            t.innerText = msg;
+            container.appendChild(t);
+            setTimeout(() => t.remove(), 3000);
+        }
+
+        function openPassModal(type, index = null) {
+            loginType = type;
+            itemToDelete = index;
+            document.getElementById('pass-input').value = "";
+            document.getElementById('pass-msg').innerText = type === "admin" ? "ACCESO A PANEL DE CONTROL" : `BORRAR A ${cloudData[index].name}`;
+            document.getElementById('password-modal').style.display = "flex";
+            document.getElementById('pass-input').focus();
+        }
+
+        function closePassModal() { document.getElementById('password-modal').style.display = "none"; }
+
+        function confirmPass() {
+            const val = document.getElementById('pass-input').value;
+            if(loginType === "admin") {
+                if(val === "SYNTAX") {
+                    document.getElementById('admin-panel').style.display = "flex";
+                    closePassModal();
+                    showToast("ACCESO RAÍZ CONCEDIDO");
+                } else { showToast("ERROR: CLAVE INVÁLIDA"); }
+            } else {
+                if(val === "PAPUS") {
+                    deleteConfirmed();
+                    closePassModal();
+                } else { showToast("ERROR: AUTORIZACIÓN DENEGADA"); }
+            }
+        }
+
+        async function loadCloud() {
+            try {
+                const r = await fetch(FB_URL);
+                cloudData = await r.json() || [];
+                renderMain();
+                renderAdmin();
+            } catch(e) { showToast("ERROR DE CONEXIÓN"); }
+        }
+
+        function renderMain() {
+            const grid = document.getElementById('main-grid');
+            grid.innerHTML = cloudData.map((m, i) => `<div class="card-btn" onclick="startVerification(${i})"><h3>${m.name}</h3></div>`).join('');
+        }
+
+        function renderAdmin() {
+            const list = document.getElementById('admin-list');
+            const sel = document.getElementById('adm-sel');
+            list.innerHTML = cloudData.map((m, i) => `
+                <div class="manage-row">
+                    <span style="font-size:0.7rem; font-weight:700;">${m.name}</span>
+                    ${m.name !== "GAEL XIT" ? `
+                        <div class="trash-btn" onclick="openPassModal('delete', ${i})">
+                            <svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+                        </div>
+                    ` : '<div></div>'}
+                </div>`).join('');
+            sel.innerHTML = cloudData.map((m, i) => `<option value="${i}">${m.name}</option>`).join('');
+        }
+
+        async function deleteConfirmed() {
+            cloudData.splice(itemToDelete, 1);
+            await saveToFirebase();
+            showToast("USUARIO ELIMINADO");
+            loadCloud();
+        }
+
+        async function addNewMember() {
+            const n = document.getElementById('new-name');
+            if(!n.value) return showToast("ERROR: NOMBRE VACÍO");
+            cloudData.push({ name: n.value.toUpperCase(), l1: "#", l2: "#", dl: "#" });
+            await saveToFirebase();
+            n.value = "";
+            showToast("NUEVO MIEMBRO REGISTRADO");
+            loadCloud();
+        }
+
+        async function updateCloud() {
+            const i = document.getElementById('adm-sel').value;
+            cloudData[i].l1 = document.getElementById('adm-l1').value || "#";
+            cloudData[i].l2 = document.getElementById('adm-l2').value || "#";
+            cloudData[i].dl = document.getElementById('adm-dl').value || "#";
+            await saveToFirebase();
+            showToast("DATOS SINCRONIZADOS");
+        }
+
+        async function saveToFirebase() { await fetch(FB_URL, { method: 'PUT', body: JSON.stringify(cloudData) }); }
+
+        function startVerification(i) {
+            const p = cloudData[i];
+            if(p.dl === "#") return showToast("SISTEMA: SIN ENLACES ACTIVOS");
+            document.getElementById('hub-view').classList.remove('active');
+            document.getElementById('step-view').classList.add('active');
+            document.getElementById('target-name').innerText = p.name;
+            document.getElementById('l1').href = p.l1; document.getElementById('l2').href = p.l2;
+            document.getElementById('dl-final').href = p.dl;
+        }
+
+        function nextStep(s) {
+            showToast(`VERIFICANDO PASO 0${s-1}...`);
+            setTimeout(() => {
+                if(s === 2) { document.getElementById('row-2').style.opacity = "1"; document.getElementById('row-2').style.pointerEvents = "auto"; }
+                else if(s === 3) { 
+                    const f = document.getElementById('dl-final');
+                    f.style.background = "var(--primary)"; f.style.color="#000"; f.style.pointerEvents = "auto"; f.innerText = "CONCEDIDO"; 
+                    showToast("ACCESO TOTAL DESBLOQUEADO");
+                }
+            }, 3000);
+        }
+
+        function checkAdminAccess() { openPassModal('admin'); }
+        function closeAdmin() { document.getElementById('admin-panel').style.display = "none"; }
+
+        // --- AUDIO ENGINE ---
+        let tid = 1; let audio = new Audio(`MUSIC_${tid}.m4a`);
+        function togglePlay() { const b = document.getElementById('p-btn'); audio.paused ? (audio.play(), b.innerText="PAUSE") : (audio.pause(), b.innerText="PLAY"); }
+        function changeTrack(d) { audio.pause(); tid += d; if(tid > 7) tid = 1; if(tid < 1) tid = 7; audio = new Audio(`MUSIC_${tid}.m4a`); audio.play(); document.getElementById('p-btn').innerText="PAUSE"; }
+
+        // --- ENGINE DE PARTÍCULAS AVANZADO (RED NEURONAL) ---
+        const canvas = document.getElementById('particle-canvas');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+
+        class Particle {
+            constructor() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.size = Math.random() * 2 + 0.5;
+                this.speedX = Math.random() * 1 - 0.5;
+                this.speedY = Math.random() * 1 - 0.5;
+            }
+            update() {
+                this.x += this.speedX;
+                this.y += this.speedY;
+                if (this.x > canvas.width) this.x = 0;
+                else if (this.x < 0) this.x = canvas.width;
+                if (this.y > canvas.height) this.y = 0;
+                else if (this.y < 0) this.y = canvas.height;
+            }
+            draw() {
+                ctx.fillStyle = 'rgba(0, 242, 255, 0.5)';
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        function initParticles() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            particles = [];
+            let numberOfParticles = (canvas.width * canvas.height) / 9000;
+            for (let i = 0; i < numberOfParticles; i++) {
+                particles.push(new Particle());
+            }
+        }
+
+        function connect() {
+            let opacityValue = 1;
+            for (let a = 0; a < particles.length; a++) {
+                for (let b = a; b < particles.length; b++) {
+                    let distance = ((particles[a].x - particles[b].x) * (particles[a].x - particles[b].x))
+                    + ((particles[a].y - particles[b].y) * (particles[a].y - particles[b].y));
+                    if (distance < (canvas.width/7) * (canvas.height/7)) {
+                        opacityValue = 1 - (distance/20000);
+                        ctx.strokeStyle = `rgba(0, 242, 255, ${opacityValue})`;
+                        ctx.lineWidth = 0.5;
+                        ctx.beginPath();
+                        ctx.moveTo(particles[a].x, particles[a].y);
+                        ctx.lineTo(particles[b].x, particles[b].y);
+                        ctx.stroke();
+                    }
+                }
+            }
+        }
+
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            for (let i = 0; i < particles.length; i++) {
+                particles[i].update();
+                particles[i].draw();
+            }
+            connect();
+            requestAnimationFrame(animate);
+        }
+
+        window.addEventListener('resize', initParticles);
+        initParticles();
+        animate();
+        loadCloud();
+    </script>
+</body>
+</html>
